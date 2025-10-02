@@ -1,0 +1,8 @@
+pandas
+numpy
+yfinance
+requests
+tqdm
+tenacity
+matplotlib
+jinja2
