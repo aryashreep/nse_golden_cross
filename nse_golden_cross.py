@@ -176,7 +176,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Scan Nifty stocks for Golden Cross")
     parser.add_argument("timeframe", choices=["day","weekly","monthly"], help="Timeframe to scan")
     parser.add_argument("--index-scope", type=int, choices=[50, 100, 200, 500], default=500, 
-                        help="Nifty index scope (50, 100, 200, or 500). Defaults to 500.")
+                         help="Nifty index scope (50, 100, 200, or 500). Defaults to 500.")
     args = parser.parse_args()
     timeframe = args.timeframe
     index_scope = args.index_scope
@@ -252,14 +252,36 @@ if __name__ == "__main__":
         numeric_columns = ["Price", "SMA_50", "SMA_200", "Momentum_20", "Rel_30d", "Rel_90d", 
                            "Perfect_Setup", "Golden_Cross", "50>200", "20>50", "Volume_Uptrend"]
 
+        # --- 1. Define Tooltips Mapping ---
+        tooltip_map = {
+            "Ticker": "Stock Symbol on the NSE.",
+            "Sparkline": f"Last 180 {timeframe} periods of Close Price movement.",
+            "Price": "Latest Closing Price.",
+            "SMA_50": "50-period Simple Moving Average.",
+            "SMA_200": "200-period Simple Moving Average.",
+            "Perfect_Setup": "True if Golden Cross, 20>50 SMA, Price>200 SMA, Momentum>5%, and Volume Uptrend are all true.",
+            "Golden_Cross": "True if SMA50 crossed above SMA200 in the last period.",
+            "20>50": "True if SMA20 is currently above SMA50.",
+            "50>200": "True if SMA50 is currently above SMA200 (Long-term trend).",
+            "Momentum_20": f"Percentage change over the last 20 {timeframe} periods.",
+            "Volume_Uptrend": f"True if the 20-period Moving Average Volume increased from the previous period.",
+            "Rel_30d": f"Relative return against Nifty 50 over the last 30 {timeframe} periods.",
+            "Rel_90d": f"Relative return against Nifty 50 over the last 90 {timeframe} periods."
+        }
+        # --- End Tooltip Mapping ---
+        
         header_row = ""
         for i, name in enumerate(header_names):
+            tooltip = tooltip_map.get(name, name) # Get description, default to name if missing
+            
             if name == "Sparkline":
-                header_row += f'<th class="no-sort">{name}</th>'
+                # Add tooltip to non-sortable column
+                header_row += f'<th class="no-sort" title="{tooltip}">{name}</th>'
             else:
-                # Add data-type attribute for JS sorting
+                # Add data-type attribute and tooltip for sortable columns
                 data_type = "numeric" if name in numeric_columns else "string"
-                header_row += f'<th onclick="sortTable({i})" data-type="{data_type}">{name}<span class="sort-indicator"></span></th>'
+                # **MODIFIED: Added title="{tooltip}"**
+                header_row += f'<th onclick="sortTable({i})" data-type="{data_type}" title="{tooltip}">{name}<span class="sort-indicator"></span></th>'
 
         table_rows = ""
         for index, row in df_html.iterrows():
@@ -405,7 +427,7 @@ td img {{ display: block; margin: auto; height: 30px; }}
 <body>
 <div class="container">
 <h2 class="header-title">NSE Golden Cross Scan - Nifty {index_scope} ({timeframe.capitalize()})</h2>
-<p>Filter criteria: Golden Cross (SMA50>SMA200) + SMA20>SMA50 + Price>SMA200 + Momentum 20d > 5% + Volume Uptrend. Click on column headers to sort the table. **The Ticker links now open on the Finology Ticker page.**</p>
+<p>Filter criteria: Golden Cross (SMA50>SMA200) + SMA20>SMA50 + Price>SMA200 + Momentum 20d > 5% + Volume Uptrend. Click on column headers to sort the table. Hover over column titles for tooltips explaining the metric.</p>
 
 <div class="table-wrapper">
 {html_content}
